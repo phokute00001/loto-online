@@ -1,44 +1,34 @@
 const socket = io();
-let roomId = "";
 
-function create() {
-  roomId = document.getElementById("room").value;
-  socket.emit("create-room", roomId);
+function createRoom() {
+  const name = document.getElementById("name").value.trim();
+  const roomId = document.getElementById("room").value.trim();
+
+  if (!name || !roomId) {
+    alert("Nhập tên và mã phòng");
+    return;
+  }
+
+  socket.emit("create-room", { roomId, name });
 }
 
-function join() {
-  roomId = document.getElementById("room").value;
-  socket.emit("join-room", roomId,
-    document.getElementById("name").value
-  );
+function joinRoom() {
+  const name = document.getElementById("name").value.trim();
+  const roomId = document.getElementById("room").value.trim();
+
+  if (!name || !roomId) {
+    alert("Nhập tên và mã phòng");
+    return;
+  }
+
+  socket.emit("join-room", { roomId, name });
 }
 
-function call() {
-  socket.emit("call-number", roomId);
-}
-
-function win() {
-  socket.emit("claim-win", roomId);
-}
-
-socket.on("ticket", nums => {
-  const t = document.getElementById("ticket");
-  nums.forEach(n => {
-    const d = document.createElement("div");
-    d.className = "cell";
-    d.innerText = n;
-    t.appendChild(d);
-  });
+socket.on("room-joined", data => {
+  document.getElementById("status").innerText =
+    `Đã vào phòng ${data.roomId} (${data.role.toUpperCase()})`;
 });
 
-socket.on("number-called", data => {
-  document.getElementById("number") &&
-    (document.getElementById("number").innerText = data.number);
-
-  document.getElementById("history").innerText =
-    data.history.join(", ");
-});
-
-socket.on("winner", name => {
-  alert("🏆 Người thắng: " + name);
+socket.on("players", players => {
+  console.log("Danh sách người chơi:", players);
 });
