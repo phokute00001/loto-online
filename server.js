@@ -81,18 +81,17 @@ io.on("connection", socket => {
   });
 
   // ====== BÁO KINH ======
-  socket.on("claim-kinh", ({ roomId, name }) => {
-    io.to(roomId).emit("winner", {
-      type: "KINH",
-      name
-    });
-  });
+  socket.on("claim-win", ({ roomId }) => {
+  const room = rooms[roomId];
+  if (!room) return;
 
-  socket.on("disconnect", () => {
-    for (const roomId in rooms) {
-      const room = rooms[roomId];
-      delete room.players[socket.id];
-    }
+  const player = room.players[socket.id];
+  if (!player) return;
+
+  io.to(roomId).emit("winner", player.name);
+
+  // reset ván mới
+  room.called = [];
   });
 
 });
