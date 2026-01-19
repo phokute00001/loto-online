@@ -16,12 +16,13 @@ CREATE TABLE IF NOT EXISTS history (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   room TEXT,
   winner TEXT,
-  type TEXT,
+  amount INTEGER,
   time TEXT
 )`).run();
 
 /* ===== GAME ===== */
 const rooms = {};
+const TICKET_PRICE = 5;
 
 function genTicket() {
   const nums = [];
@@ -36,34 +37,42 @@ function check(ticket, called) {
   for (let r = 0; r < 5; r++) {
     const row = ticket.slice(r * 5, r * 5 + 5);
     const hit = row.filter(n => called.includes(n)).length;
-    if (hit === 5) return "KINH";
     if (hit === 4) return "DOI";
+    if (hit === 5) return "KINH";
   }
   return null;
 }
 
 io.on("connection", socket => {
 
-  socket.on("create-room", ({ room, name }) => {
-    if (rooms[room]) return socket.emit("err", "Phòng tồn tại");
+  socket.on("create-room", ({ room, name, coin }) => {
+    if (rooms[room]) return socket.emit("err", "Phòng đã tồn tại");
 
     rooms[room] = {
       host: socket.id,
       called: [],
       players: {},
-      inGame: false
+      inGame: false,
+      pot: 0
     };
 
-    rooms[room].players[socket.id] = { name, tickets: [] };
+    rooms[room].players[socket.id] = {
+      name,
+      coin,
+      tickets: []
+    };
+
     socket.join(room);
     io.to(room).emit("room-info", rooms[room]);
   });
 
-  socket.on("join-room", ({ room, name }) => {
-    if (!rooms[room]) return;
-    rooms[room].players[socket.id] = { name, tickets: [] };
+  socket.on("join-room", ({ room, name, coin }) => {
+    const r = rooms[room];
+    if (!r || Object.keys(r.players).length >= 16) return;
+
+    r.players[socket.id] = { name, coin, tickets: [] };
     socket.join(room);
-    io.to(room).emit("room-info", rooms[room]);
+    io.to(room).emit("room-info", r);
   });
 
   socket.on("buy-ticket", room => {
@@ -71,16 +80,24 @@ io.on("connection", socket => {
     if (!r || r.inGame) return;
 
     const p = r.players[socket.id];
-    if (p.tickets.length >= 2) return;
+    if (p.coin < TICKET_PRICE || p.tickets.length >= 2) return;
 
     const t = genTicket();
     p.tickets.push(t);
+    p.coin -= TICKET_PRICE;
+    r.pot += TICKET_PRICE;
+
     socket.emit("ticket", t);
+    io.to(room).emit("room-info", r);
   });
 
-  socket.on("start", room => {
+  socket.on("start-game", room => {
     const r = rooms[room];
     if (socket.id !== r.host) return;
+
+    if (r.players[r.host].tickets.length < 2)
+      return socket.emit("err", "CÁI phải có 2 vé");
+
     r.called = [];
     r.inGame = true;
     io.to(room).emit("start");
@@ -88,7 +105,7 @@ io.on("connection", socket => {
 
   socket.on("call", room => {
     const r = rooms[room];
-    if (socket.id !== r.host) return;
+    if (!r || socket.id !== r.host || !r.inGame) return;
 
     let n;
     do {
@@ -100,18 +117,23 @@ io.on("connection", socket => {
 
     for (const id in r.players) {
       const p = r.players[id];
-      p.tickets.forEach(t => {
+      for (const t of p.tickets) {
         const res = check(t, r.called);
-        if (res === "DOI")
+        if (res === "DOI") {
           io.to(room).emit("chat", `⏳ ${p.name} ĐỢI`);
+        }
         if (res === "KINH") {
-          io.to(room).emit("chat", `🎉 ${p.name} KINH`);
-          db.prepare(
-            "INSERT INTO history(room,winner,type,time) VALUES(?,?,?,?)"
-          ).run(room, p.name, "KINH", new Date().toISOString());
+          p.coin += r.pot;
+          db.prepare(`
+            INSERT INTO history(room,winner,amount,time)
+            VALUES(?,?,?,?)
+          `).run(room, p.name, r.pot, new Date().toISOString());
+
+          io.to(room).emit("chat", `🎉 ${p.name} KINH – ăn ${r.pot} coin`);
+          r.pot = 0;
           r.inGame = false;
         }
-      });
+      }
     }
   });
 

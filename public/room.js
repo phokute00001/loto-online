@@ -2,13 +2,22 @@ const socket = io();
 const q = new URLSearchParams(location.search);
 const room = q.get("room");
 const name = q.get("name");
+const coin = Number(q.get("coin"));
 
-socket.emit("join-room", { room, name });
+socket.emit("join-room", { room, name, coin });
 
 document.getElementById("sendBtn").onclick = send;
 document.getElementById("chatInput").addEventListener("keydown", e=>{
   if(e.key==="Enter") send();
 });
+
+document.getElementById("callBtn").onclick = ()=> {
+  socket.emit("call", room);
+};
+
+document.getElementById("startBtn").onclick = ()=> {
+  socket.emit("start-game", room);
+};
 
 function send(){
   const v=document.getElementById("chatInput").value;

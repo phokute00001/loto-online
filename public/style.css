@@ -1,48 +1,25 @@
 body {
   background:#05203a;
   color:#fff;
-  font-family: 'Arial Black', Arial;
+  font-family: Arial Black, Arial;
   padding:10px;
 }
 
 .ticket {
   background:#c7e38b;
   border:6px solid #7aa63d;
-  border-radius:6px;
-  margin:12px auto;
-  width:100%;
+  margin:10px auto;
   max-width:320px;
-}
-
-.ticket table {
-  width:100%;
-  border-collapse:collapse;
 }
 
 .ticket td {
   width:20%;
-  height:50px;
+  height:48px;
   border:2px solid #6a8f2f;
   text-align:center;
   font-size:20px;
-  font-weight:900;
-  background:#c7e38b;
   color:#000;
-}
-
-@media (max-width:600px) {
-  .ticket td {
-    height:40px;
-    font-size:18px;
-  }
-}
-
-button {
-  background:#ff9800;
-  padding:8px 14px;
-  font-weight:bold;
-  border:none;
-  margin:4px;
+  font-weight:900;
 }
 
 #chatBox {
@@ -50,5 +27,4 @@ button {
   height:150px;
   overflow:auto;
   padding:6px;
-  font-size:14px;
 }

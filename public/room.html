@@ -2,35 +2,30 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>LÔ TÔ MIỀN NAM</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LÔ TÔ MIỀN NAM</title>
 <link rel="stylesheet" href="style.css">
 <script src="/socket.io/socket.io.js"></script>
 <script defer src="room.js"></script>
 </head>
-
 <body>
 
 <h2>🎪 LÔ TÔ MIỀN NAM</h2>
 
-<div id="hostControls" style="display:none">
+<div>
   <button id="startBtn">▶ VÁN MỚI</button>
-  <button id="callBtn">🎙 KÊU SỐ</button>
+  <button id="callBtn">🎤 KÊU SỐ</button>
 </div>
 
-<button id="buyBtn">🎟 MUA VÉ</button>
-
-<h3>📣 Số đã kêu</h3>
+<h3>📢 SỐ ĐÃ KÊU</h3>
 <div id="called"></div>
 
-<h3>🎫 Vé của bạn</h3>
+<h3>🎫 VÉ CỦA BẠN</h3>
 <div id="tickets"></div>
 
-<hr>
-
+<h3>💬 CHAT</h3>
 <div id="chatBox"></div>
-
-<input id="chatInput" placeholder="Chat hoặc gõ ĐỢI">
+<input id="chatInput" placeholder="Nhập chat hoặc ĐỢI">
 <button id="sendBtn">GỬI</button>
 
 </body>
