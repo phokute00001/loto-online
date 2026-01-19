@@ -1,70 +1,44 @@
 const socket = io();
-
-const params = new URLSearchParams(location.search);
-const room = params.get("room");
-const name = params.get("name");
-
-const ticketsDiv = document.getElementById("tickets");
-const calledDiv = document.getElementById("called");
-const chatBox = document.getElementById("chatBox");
-const input = document.getElementById("chatInput");
-const hostControls = document.getElementById("hostControls");
+const q = new URLSearchParams(location.search);
+const room = q.get("room");
+const name = q.get("name");
 
 socket.emit("join-room", { room, name });
 
-socket.on("room-update", r => {
-  if (socket.id === r.hostId) {
-    hostControls.style.display = "block";
-  }
+document.getElementById("sendBtn").onclick = send;
+document.getElementById("chatInput").addEventListener("keydown", e=>{
+  if(e.key==="Enter") send();
 });
 
-document.getElementById("buyBtn").onclick = () => {
-  socket.emit("buy-ticket", room);
-};
-
-socket.on("your-ticket", ticket => {
-  const table = document.createElement("table");
-  table.className = "ticket";
-
-  for (let i = 0; i < 5; i++) {
-    const tr = document.createElement("tr");
-    for (let j = 0; j < 5; j++) {
-      const td = document.createElement("td");
-      td.textContent = ticket[i * 5 + j];
-      tr.appendChild(td);
-    }
-    table.appendChild(tr);
-  }
-  ticketsDiv.appendChild(table);
-});
-
-document.getElementById("startBtn").onclick = () => {
-  socket.emit("start-game", room);
-  calledDiv.innerHTML = "";
-};
-
-document.getElementById("callBtn").onclick = () => {
-  socket.emit("call-number", room);
-};
-
-socket.on("number-called", n => {
-  calledDiv.innerHTML += n + " ";
-});
-
-document.getElementById("sendBtn").onclick = sendChat;
-input.addEventListener("keydown", e => {
-  if (e.key === "Enter") sendChat();
-});
-
-function sendChat() {
-  if (!input.value.trim()) return;
-  socket.emit("send-chat", { room, name, text: input.value });
-  input.value = "";
+function send(){
+  const v=document.getElementById("chatInput").value;
+  if(!v) return;
+  socket.emit("chat",{room,name,text:v});
+  document.getElementById("chatInput").value="";
 }
 
-socket.on("chat", msg => {
-  const d = document.createElement("div");
-  d.textContent = msg;
-  chatBox.appendChild(d);
-  chatBox.scrollTop = chatBox.scrollHeight;
+socket.on("ticket", t=>{
+  const div=document.createElement("div");
+  div.className="ticket";
+  let html="<table>";
+  for(let r=0;r<5;r++){
+    html+="<tr>";
+    for(let c=0;c<5;c++){
+      html+=`<td>${t[r*5+c]}</td>`;
+    }
+    html+="</tr>";
+  }
+  html+="</table>";
+  div.innerHTML=html;
+  document.getElementById("tickets").appendChild(div);
+});
+
+socket.on("called", n=>{
+  document.getElementById("called").innerHTML+=` ${n}`;
+});
+
+socket.on("chat", m=>{
+  const d=document.createElement("div");
+  d.textContent=m;
+  document.getElementById("chatBox").appendChild(d);
 });

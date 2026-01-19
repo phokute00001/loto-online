@@ -1,6 +1,7 @@
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
+const Database = require("better-sqlite3");
 
 const app = express();
 const server = http.createServer(app);
@@ -8,6 +9,18 @@ const io = new Server(server);
 
 app.use(express.static("public"));
 
+/* ===== DB ===== */
+const db = new Database("db.sqlite");
+db.prepare(`
+CREATE TABLE IF NOT EXISTS history (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  room TEXT,
+  winner TEXT,
+  type TEXT,
+  time TEXT
+)`).run();
+
+/* ===== GAME ===== */
 const rooms = {};
 
 function genTicket() {
@@ -19,16 +32,9 @@ function genTicket() {
   return nums;
 }
 
-function checkTicket(ticket, called) {
-  const rows = [
-    ticket.slice(0,5),
-    ticket.slice(5,10),
-    ticket.slice(10,15),
-    ticket.slice(15,20),
-    ticket.slice(20,25),
-  ];
-
-  for (const row of rows) {
+function check(ticket, called) {
+  for (let r = 0; r < 5; r++) {
+    const row = ticket.slice(r * 5, r * 5 + 5);
     const hit = row.filter(n => called.includes(n)).length;
     if (hit === 5) return "KINH";
     if (hit === 4) return "DOI";
@@ -39,107 +45,80 @@ function checkTicket(ticket, called) {
 io.on("connection", socket => {
 
   socket.on("create-room", ({ room, name }) => {
-    if (rooms[room]) {
-      socket.emit("error-msg", "Phòng đã tồn tại");
-      return;
-    }
+    if (rooms[room]) return socket.emit("err", "Phòng tồn tại");
 
     rooms[room] = {
-      hostId: socket.id,
-      inGame: false,
+      host: socket.id,
       called: [],
       players: {},
-      usedTickets: []
+      inGame: false
     };
 
-    rooms[room].players[socket.id] = {
-      name,
-      tickets: []
-    };
-
+    rooms[room].players[socket.id] = { name, tickets: [] };
     socket.join(room);
-    io.to(room).emit("room-update", rooms[room]);
+    io.to(room).emit("room-info", rooms[room]);
   });
 
   socket.on("join-room", ({ room, name }) => {
     if (!rooms[room]) return;
-
-    rooms[room].players[socket.id] = {
-      name,
-      tickets: []
-    };
-
+    rooms[room].players[socket.id] = { name, tickets: [] };
     socket.join(room);
-    io.to(room).emit("room-update", rooms[room]);
+    io.to(room).emit("room-info", rooms[room]);
   });
 
   socket.on("buy-ticket", room => {
     const r = rooms[room];
     if (!r || r.inGame) return;
 
-    const player = r.players[socket.id];
-    if (player.tickets.length >= 2) return;
+    const p = r.players[socket.id];
+    if (p.tickets.length >= 2) return;
 
-    let ticket;
-    do {
-      ticket = genTicket();
-    } while (
-      r.usedTickets.some(t => JSON.stringify(t) === JSON.stringify(ticket))
-    );
-
-    player.tickets.push(ticket);
-    r.usedTickets.push(ticket);
-
-    socket.emit("your-ticket", ticket);
+    const t = genTicket();
+    p.tickets.push(t);
+    socket.emit("ticket", t);
   });
 
-  socket.on("start-game", room => {
+  socket.on("start", room => {
     const r = rooms[room];
-    if (!r || socket.id !== r.hostId) return;
-
-    r.inGame = true;
+    if (socket.id !== r.host) return;
     r.called = [];
-    io.to(room).emit("game-started");
+    r.inGame = true;
+    io.to(room).emit("start");
   });
 
-  socket.on("call-number", room => {
+  socket.on("call", room => {
     const r = rooms[room];
-    if (!r || socket.id !== r.hostId) return;
+    if (socket.id !== r.host) return;
 
     let n;
     do {
       n = Math.floor(Math.random() * 90) + 1;
     } while (r.called.includes(n));
-
     r.called.push(n);
-    io.to(room).emit("number-called", n);
 
-    for (const pid in r.players) {
-      const p = r.players[pid];
-      p.tickets.forEach(ticket => {
-        const res = checkTicket(ticket, r.called);
-        if (res === "DOI") {
+    io.to(room).emit("called", n);
+
+    for (const id in r.players) {
+      const p = r.players[id];
+      p.tickets.forEach(t => {
+        const res = check(t, r.called);
+        if (res === "DOI")
           io.to(room).emit("chat", `⏳ ${p.name} ĐỢI`);
-        }
         if (res === "KINH") {
           io.to(room).emit("chat", `🎉 ${p.name} KINH`);
+          db.prepare(
+            "INSERT INTO history(room,winner,type,time) VALUES(?,?,?,?)"
+          ).run(room, p.name, "KINH", new Date().toISOString());
           r.inGame = false;
         }
       });
     }
   });
 
-  socket.on("send-chat", ({ room, name, text }) => {
+  socket.on("chat", ({ room, name, text }) => {
     io.to(room).emit("chat", `${name}: ${text}`);
   });
 
-  socket.on("disconnect", () => {
-    for (const room in rooms) {
-      const r = rooms[room];
-      delete r.players[socket.id];
-      if (Object.keys(r.players).length === 0) delete rooms[room];
-    }
-  });
 });
 
 server.listen(process.env.PORT || 3000);
