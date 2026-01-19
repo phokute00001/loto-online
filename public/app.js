@@ -1,58 +1,81 @@
 const socket = io();
+const app = document.getElementById("app");
 
-const nameInput = document.getElementById("name");
-const roomInput = document.getElementById("room");
-const btnCreate = document.getElementById("create");
-const btnJoin = document.getElementById("join");
+let myTicket = [];
+let marked = Array(25).fill(false);
+let roomId = "";
+let myName = "";
 
-btnCreate.onclick = () => {
-  const name = nameInput.value.trim();
-  const roomId = roomInput.value.trim();
-  if (!name || !roomId) return alert("Nhập đủ tên và phòng");
-  socket.emit("create-room", { roomId, name });
+document.getElementById("create").onclick = () => {
+  myName = name.value.trim();
+  roomId = room.value.trim();
+  if(!myName || !roomId) return alert("Nhập đủ");
+  socket.emit("create-room",{roomId,name:myName});
 };
 
-btnJoin.onclick = () => {
-  const name = nameInput.value.trim();
-  const roomId = roomInput.value.trim();
-  if (!name || !roomId) return alert("Nhập đủ tên và phòng");
-  socket.emit("join-room", { roomId, name });
+document.getElementById("join").onclick = () => {
+  myName = name.value.trim();
+  roomId = room.value.trim();
+  if(!myName || !roomId) return alert("Nhập đủ");
+  socket.emit("join-room",{roomId,name:myName});
 };
 
-socket.on("room-created", ({ roomId }) => {
-  document.body.innerHTML = `
-    <h2>🎙 HOST</h2>
+socket.on("room-created", ({roomId})=>{
+  app.innerHTML = `
+    <h3>🎙 HOST</h3>
     <p>Phòng: ${roomId}</p>
-    <button id="call">Gọi số</button>
+    <button id="call">📢 Kêu Số</button>
     <div id="history"></div>
   `;
-
-  document.getElementById("call").onclick = () => {
-    socket.emit("call-number", roomId);
-  };
+  call.onclick=()=>socket.emit("call-number",roomId);
 });
 
-socket.on("joined-room", ({ ticket, host }) => {
-  document.body.innerHTML = `
-    <h2>🎟 PLAYER</h2>
+socket.on("joined-room", ({ticket,host})=>{
+  myTicket = ticket;
+  app.innerHTML = `
+    <h3>🎟 PLAYER</h3>
     <p>Host: ${host}</p>
-    <p>Vé của bạn:</p>
-    <pre>${ticket.join(", ")}</pre>
-    <div id="history"></div>
+    <div class="grid" id="grid"></div>
+    <button id="claim">🏆 Báo Thắng</button>
   `;
+  renderGrid();
+  claim.onclick=checkWin;
 });
 
-socket.on("number-called", data => {
-  const h = document.getElementById("history");
-  if (h) {
-    h.innerHTML = `
-      <h3>🔊 Số: ${data.number}</h3>
-      <p>Lịch sử: ${data.history.join(", ")}</p>
-    `;
-  }
+function renderGrid(){
+  const g=document.getElementById("grid");
+  g.innerHTML="";
+  myTicket.forEach((n,i)=>{
+    const d=document.createElement("div");
+    d.className="cell";
+    d.innerText=n;
+    d.onclick=()=>{
+      marked[i]=!marked[i];
+      d.classList.toggle("marked");
+    };
+    g.appendChild(d);
+  });
+}
+
+function checkWin(){
+  const rows=[[0,1,2,3,4],[5,6,7,8,9],[10,11,12,13,14],[15,16,17,18,19],[20,21,22,23,24]];
+  let rowWin = rows.some(r=>r.every(i=>marked[i]));
+  let fullWin = marked.every(m=>m);
+  if(rowWin) socket.emit("claim-win",{roomId,type:"HÀNG",name:myName});
+  if(fullWin) socket.emit("claim-win",{roomId,type:"FULL",name:myName});
+  if(!rowWin && !fullWin) alert("Chưa thắng");
+}
+
+socket.on("number-called",d=>{
+  document.getElementById("history").innerHTML=
+    `<p>🔊 Số: ${d.number}</p><small>${d.history.join(", ")}</small>`;
 });
 
-socket.on("room-closed", () => {
-  alert("Host đã thoát, phòng đóng");
+socket.on("winner",({type,name})=>{
+  alert(`🎉 ${name} thắng ${type}!`);
+});
+
+socket.on("room-closed",()=>{
+  alert("Host thoát – phòng đóng");
   location.reload();
 });
