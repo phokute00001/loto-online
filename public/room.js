@@ -1,62 +1,39 @@
 const socket = io();
+const params = new URLSearchParams(window.location.search);
 
-const role = localStorage.getItem("role");
-const roomId = localStorage.getItem("room");
+const roomId = params.get("room");
+const name = params.get("name");
 
-const callBtn = document.getElementById("callBtn");
-const calledBox = document.getElementById("calledNumbers");
-const ticketsBox = document.getElementById("tickets");
+const messages = document.getElementById("messages");
 
-if (role !== "host") {
-  callBtn.style.display = "none";
+function addMsg(user, text) {
+  const div = document.createElement("div");
+  div.innerHTML = `<b>${user}:</b> ${text}`;
+  messages.appendChild(div);
+  messages.scrollTop = messages.scrollHeight;
 }
 
-// ====== KÊU SỐ ======
-callBtn.onclick = () => {
-  socket.emit("call-number", roomId);
+document.getElementById("sendBtn").onclick = () => {
+  const input = document.getElementById("chatInput");
+  if (!input.value) return;
+
+  socket.emit("chat", {
+    roomId,
+    name,
+    message: input.value
+  });
+
+  input.value = "";
 };
 
-// ====== NHẬN SỐ KÊU ======
-socket.on("number-called", data => {
-  const span = document.createElement("span");
-  span.textContent = data.number;
-  calledBox.appendChild(span);
+document.getElementById("doiBtn").onclick = () => {
+  socket.emit("doi", roomId);
+};
 
-  document.querySelectorAll(".cell").forEach(c => {
-    if (Number(c.dataset.num) === data.number) {
-      c.classList.add("hit");
-    }
-  });
+socket.on("chat-message", data => {
+  addMsg(data.user, data.text);
 });
 
-// ====== NHẬN VÉ ======
-socket.on("ticket", tickets => {
-  tickets.forEach((nums, index) => {
-    const div = document.createElement("div");
-    div.innerHTML = `<b>Vé ${index + 1}</b>`;
-    div.className = "ticket";
-
-    nums.forEach(n => {
-      const c = document.createElement("div");
-      c.className = "cell";
-      c.dataset.num = n;
-      c.textContent = n;
-      div.appendChild(c);
-    });
-
-    ticketsBox.appendChild(div);
-  });
-});
-
-// ====== KINH ======
-document.getElementById("claimLine").onclick = () => {
-  socket.emit("claim-win", { roomId, type: "line" });
-};
-
-document.getElementById("claimFull").onclick = () => {
-  socket.emit("claim-win", { roomId, type: "full" });
-};
-
-socket.on("winner", name => {
-  alert("🎉 Người thắng: " + name);
+socket.on("error-msg", msg => {
+  alert(msg);
 });

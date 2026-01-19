@@ -10,93 +10,109 @@ app.use(express.static("public"));
 
 const rooms = {};
 
-// ====== TẠO VÉ 5x5 ======
-function generateTicket() {
-  const nums = [];
-  while (nums.length < 25) {
-    const n = Math.floor(Math.random() * 90) + 1;
-    if (!nums.includes(n)) nums.push(n);
+function checkNearWin(ticket, called) {
+  // ticket: mảng 25 số
+  // chia thành 5 hàng ngang
+  for (let r = 0; r < 5; r++) {
+    const row = ticket.slice(r * 5, r * 5 + 5);
+    const hit = row.filter(n => called.includes(n));
+    if (hit.length === 4) {
+      return true;
+    }
   }
-  return nums;
+  return false;
 }
 
 io.on("connection", socket => {
 
-  // ====== CÁI TẠO PHÒNG ======
-  socket.on("create-room", ({ roomId, name }) => {
-    if (rooms[roomId]) return;
-
+  socket.on("create-room", ({ roomId, name, tickets }) => {
     rooms[roomId] = {
-      hostId: socket.id,
+      host: socket.id,
       hostName: name,
       called: [],
       players: {}
     };
 
-    socket.join(roomId);
-    socket.emit("room-created", roomId);
-  });
-
-  // ====== NGƯỜI CHƠI VÀO PHÒNG ======
-  socket.on("join-room", ({ roomId, name, tickets }) => {
-    const room = rooms[roomId];
-    if (!room) return;
-
-    const myTickets = [];
-    for (let i = 0; i < tickets; i++) {
-      myTickets.push(generateTicket());
-    }
-
-    room.players[socket.id] = {
+    rooms[roomId].players[socket.id] = {
       name,
-      tickets: myTickets
+      tickets
     };
 
     socket.join(roomId);
-    socket.emit("your-tickets", myTickets);
+  });
 
-    io.to(roomId).emit("players", {
-      host: room.hostName,
-      players: Object.values(room.players).map(p => p.name)
+  socket.on("join-room", ({ roomId, name, tickets }) => {
+    if (!rooms[roomId]) return;
+
+    rooms[roomId].players[socket.id] = {
+      name,
+      tickets
+    };
+
+    socket.join(roomId);
+
+    io.to(roomId).emit("chat-message", {
+      user: "HỆ THỐNG",
+      text: `${name} đã vào phòng`
     });
   });
 
-  // ====== CÁI KÊU SỐ ======
   socket.on("call-number", roomId => {
     const room = rooms[roomId];
-    if (!room) return;
-    if (socket.id !== room.hostId) return; // chỉ CÁI mới kêu
+    if (!room || socket.id !== room.host) return;
 
-    let num;
+    let n;
     do {
-      num = Math.floor(Math.random() * 90) + 1;
-    } while (room.called.includes(num));
+      n = Math.floor(Math.random() * 90) + 1;
+    } while (room.called.includes(n));
 
-    room.called.push(num);
+    room.called.push(n);
 
-    io.to(roomId).emit("number-called", {
-      number: num,
-      history: room.called
+    io.to(roomId).emit("number-called", n);
+  });
+
+  // ✋ ĐỢI (CÓ ĐIỀU KIỆN)
+  socket.on("doi", roomId => {
+    const room = rooms[roomId];
+    if (!room) return;
+
+    let text = "";
+
+    if (socket.id === room.host) {
+      text = "🎤 CÁI ĐỢI";
+    } else {
+      const player = room.players[socket.id];
+      let allow = false;
+
+      for (const ticket of player.tickets) {
+        if (checkNearWin(ticket, room.called)) {
+          allow = true;
+          break;
+        }
+      }
+
+      if (!allow) {
+        socket.emit("error-msg", "❌ Chưa đủ điều kiện ĐỢI (cần 4/5 số 1 hàng)");
+        return;
+      }
+
+      text = `🙋 ${player.name} ĐỢI`;
+    }
+
+    io.to(roomId).emit("chat-message", {
+      user: "ĐỢI",
+      text
     });
   });
 
-  // ====== BÁO KINH ======
-  socket.on("claim-win", ({ roomId }) => {
-  const room = rooms[roomId];
-  if (!room) return;
-
-  const player = room.players[socket.id];
-  if (!player) return;
-
-  io.to(roomId).emit("winner", player.name);
-
-  // reset ván mới
-  room.called = [];
+  // 💬 CHAT
+  socket.on("chat", ({ roomId, name, message }) => {
+    io.to(roomId).emit("chat-message", {
+      user: name,
+      text: message
+    });
   });
 
 });
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log("🚀 LÔ TÔ MIỀN NAM chạy port", PORT);
-});
+server.listen(process.env.PORT || 3000);
