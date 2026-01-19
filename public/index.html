@@ -3,20 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <title>LÔ TÔ MIỀN NAM</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
   <link rel="stylesheet" href="style.css">
   <script src="/socket.io/socket.io.js"></script>
   <script defer src="app.js"></script>
 </head>
+
 <body>
+  <h2 class="title">🎪 LÔ TÔ MIỀN NAM</h2>
 
-<div class="box">
-  <h2>LÔ TÔ MIỀN NAM</h2>
-  <input id="name" placeholder="Tên người chơi">
-  <input id="room" placeholder="Mã phòng">
-  <input id="coin" type="number" value="100">
-  <button onclick="createRoom()">🎙 Tạo phòng (Cái)</button>
-  <button onclick="joinRoom()">🎟 Vào phòng</button>
-</div>
+  <div class="login-box">
+    <input id="name" placeholder="Tên người chơi">
+    <input id="room" placeholder="Mã phòng">
+    <input id="coin" type="number" value="1000">
 
+    <button id="createBtn">🎙 Tạo phòng (Cái)</button>
+    <button id="joinBtn">🎟 Vào phòng</button>
+
+    <p id="status"></p>
+  </div>
 </body>
 </html>

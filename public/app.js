@@ -1,38 +1,36 @@
 const socket = io();
-const roomId = new URLSearchParams(location.search).get("room");
 
-const pot = document.getElementById("pot");
-const historyBox = document.getElementById("history");
+const nameInput = document.getElementById("name");
+const roomInput = document.getElementById("room");
+const coinInput = document.getElementById("coin");
+const status = document.getElementById("status");
 
-document.getElementById("callBtn").onclick = () =>
-  socket.emit("call-number", roomId);
+document.getElementById("createBtn").onclick = () => {
+  const name = nameInput.value.trim();
+  const room = roomInput.value.trim();
+  const coin = coinInput.value;
 
-document.getElementById("newRound").onclick = () =>
-  socket.emit("new-round", roomId);
-
-document.getElementById("requestHost").onclick = () =>
-  socket.emit("request-host", roomId);
-
-socket.on("room-update", room => {
-  pot.innerText = room.pot;
-
-  historyBox.innerHTML = "";
-  room.history.forEach(h => {
-    const li = document.createElement("li");
-    li.innerText =
-      `${h.time} – KINH: ${h.winners.join(", ")} – ăn ${h.reward} coin`;
-    historyBox.appendChild(li);
-  });
-});
-
-socket.on("host-request", data => {
-  if (confirm(`${data.from} xin làm Cái. Đồng ý?`)) {
-    socket.emit("host-decision", { roomId, accept: true });
-  } else {
-    socket.emit("host-decision", { roomId, accept: false });
+  if (!name || !room) {
+    status.textContent = "⚠️ Nhập đủ tên và mã phòng";
+    return;
   }
-});
 
-socket.on("game-over", () => {
-  alert("🎉 ĐÃ KINH – XEM LỊCH SỬ VÁN");
-});
+  socket.emit("create-room", { room, name, coin });
+
+  location.href = `/room.html?room=${room}&name=${name}`;
+};
+
+document.getElementById("joinBtn").onclick = () => {
+  const name = nameInput.value.trim();
+  const room = roomInput.value.trim();
+  const coin = coinInput.value;
+
+  if (!name || !room) {
+    status.textContent = "⚠️ Nhập đủ tên và mã phòng";
+    return;
+  }
+
+  socket.emit("join-room", { room, name, coin });
+
+  location.href = `/room.html?room=${room}&name=${name}`;
+};

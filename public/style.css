@@ -1,75 +1,35 @@
 body {
-  background: #0b1a2a;
-  font-family: Arial, sans-serif;
+  background: #071a2d;
   color: white;
+  font-family: Arial, sans-serif;
   margin: 0;
-  padding: 10px;
+  padding: 20px;
 }
 
 .title {
   text-align: center;
-  margin-bottom: 10px;
+  margin-bottom: 20px;
+}
+
+.login-box {
+  max-width: 500px;
+  margin: auto;
+}
+
+input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 8px;
+  border-radius: 5px;
+  border: none;
 }
 
 button {
-  padding: 10px;
-  margin: 5px;
-  font-weight: bold;
+  padding: 12px;
+  margin-right: 5px;
+  background: orange;
   border: none;
   border-radius: 6px;
-  background: orange;
+  font-weight: bold;
   cursor: pointer;
-}
-
-.hidden {
-  display: none;
-}
-
-.host-controls {
-  text-align: center;
-  margin-bottom: 10px;
-}
-
-.called-box {
-  background: #122;
-  padding: 10px;
-  border-radius: 6px;
-  margin-bottom: 10px;
-}
-
-.called-box span {
-  display: inline-block;
-  margin: 4px;
-  padding: 6px 8px;
-  background: #ff9800;
-  color: black;
-  border-radius: 4px;
-}
-
-.ticket-area {
-  background: #123;
-  padding: 10px;
-  border-radius: 6px;
-  margin-bottom: 10px;
-}
-
-.chatbox {
-  background: #111;
-  border-radius: 6px;
-  padding: 10px;
-}
-
-#messages {
-  max-height: 200px;
-  overflow-y: auto;
-  margin-bottom: 6px;
-}
-
-#chatInput {
-  width: 70%;
-  padding: 8px;
-}
-
-#sendChat {
-  width: 25%;
 }
