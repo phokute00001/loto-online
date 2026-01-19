@@ -3,8 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <title>Lô Tô Online</title>
+
   <script src="/socket.io/socket.io.js"></script>
   <script defer src="app.js"></script>
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -19,7 +21,7 @@
       background: #222;
       padding: 20px;
       border-radius: 8px;
-      width: 300px;
+      width: 320px;
       text-align: center;
     }
     input, button {
@@ -44,10 +46,8 @@
   <input id="name" placeholder="Nhập tên của bạn">
   <input id="room" placeholder="Nhập mã phòng">
 
-  <button onclick="createRoom()">🎙 Tạo phòng (Host)</button>
-  <button onclick="joinRoom()">🎟 Vào phòng</button>
-
-  <p id="status"></p>
+  <button id="create">🎙 Tạo phòng (Host)</button>
+  <button id="join">🎟 Vào phòng</button>
 </div>
 
 </body>
