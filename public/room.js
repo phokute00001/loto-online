@@ -1,77 +1,44 @@
 const socket = io();
-const params = new URLSearchParams(location.search);
 
-const roomId = params.get("room");
+const params = new URLSearchParams(window.location.search);
+const room = params.get("room");
 const name = params.get("name");
 
-const calledBox = document.getElementById("calledNumbers");
-const messages = document.getElementById("messages");
-const chatInput = document.getElementById("chatInput");
+document.getElementById("roomInfo").innerText = `Phòng: ${room}`;
 
-const hostControls = document.getElementById("hostControls");
-const callBtn = document.getElementById("callBtn");
-const confirmBtn = document.getElementById("confirmBtn");
-const startBtn = document.getElementById("startBtn");
+socket.emit("join-room", { room, name });
 
-function addMessage(user, text) {
-  const div = document.createElement("div");
-  div.innerHTML = `<b>${user}:</b> ${text}`;
-  messages.appendChild(div);
-  messages.scrollTop = messages.scrollHeight;
+const playersEl = document.getElementById("players");
+const chatBox = document.getElementById("chatBox");
+const input = document.getElementById("chatInput");
+
+socket.on("room-update", data => {
+  playersEl.innerHTML = "";
+  data.players.forEach(p => {
+    const li = document.createElement("li");
+    li.textContent = p.name;
+    playersEl.appendChild(li);
+  });
+});
+
+document.getElementById("sendBtn").onclick = sendChat;
+
+input.addEventListener("keydown", e => {
+  if (e.key === "Enter") sendChat();
+});
+
+function sendChat() {
+  const text = input.value.trim();
+  if (!text) return;
+  socket.emit("send-chat", { room, name, text });
+  input.value = "";
 }
 
-// 📩 CHAT
-document.getElementById("sendChat").onclick = () => {
-  if (!chatInput.value.trim()) return;
-  socket.emit("chat-message", {
-    roomId,
-    user: name,
-    text: chatInput.value
-  });
-  chatInput.value = "";
-};
-
-// 🎤 CÁI KÊU SỐ
-callBtn.onclick = () => {
-  socket.emit("call-number", roomId);
-};
-
-// ✅ ĐỐI CHIẾU
-confirmBtn.onclick = () => {
-  socket.emit("confirm-kinh", roomId);
-};
-
-// ▶ VÁN MỚI
-startBtn.onclick = () => {
-  socket.emit("start-round", roomId);
-};
-
-// 📢 SỐ KÊU
-socket.on("number-called", n => {
-  const span = document.createElement("span");
-  span.textContent = n;
-  calledBox.appendChild(span);
+socket.on("chat", msg => {
+  const div = document.createElement("div");
+  div.textContent = msg;
+  chatBox.appendChild(div);
+  chatBox.scrollTop = chatBox.scrollHeight;
 });
 
-// 💬 CHAT
-socket.on("chat-message", data => {
-  addMessage(data.user, data.text);
-});
-
-// ⚠️ BÁO KINH
-socket.on("need-check", winner => {
-  addMessage("⚠️ HỆ THỐNG", `${winner.name} báo KINH – chờ CÁI đối chiếu`);
-});
-
-// 🎉 KẾT QUẢ
-socket.on("round-ended", () => {
-  addMessage("🎉", "VÁN KẾT THÚC – CHỜ VÁN MỚI");
-  calledBox.innerHTML = "";
-});
-
-// 🔄 CẬP NHẬT ROOM
-socket.on("room-update", room => {
-  if (room.host === socket.id) {
-    hostControls.classList.remove("hidden");
-  }
-});
+socket.on("error-msg", msg => alert(msg));
