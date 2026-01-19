@@ -10,6 +10,7 @@ app.use(express.static("public"));
 
 const rooms = {};
 
+// tạo vé 25 số
 function generateTicket() {
   const nums = [];
   while (nums.length < 25) {
@@ -21,32 +22,66 @@ function generateTicket() {
 
 io.on("connection", socket => {
 
-  socket.on("create-room", roomId => {
+  // TẠO PHÒNG → NGƯỜI TẠO = HOST
+  socket.on("create-room", ({ roomId, name }) => {
+    if (rooms[roomId]) return;
+
     rooms[roomId] = {
+      hostId: socket.id,
       called: [],
       players: {}
     };
-    socket.join(roomId);
-    socket.emit("room-created", roomId);
-  });
-
-  socket.on("join-room", (roomId, name) => {
-    if (!rooms[roomId]) return;
 
     const ticket = generateTicket();
+
     rooms[roomId].players[socket.id] = {
       name,
+      role: "host",
       ticket
     };
 
     socket.join(roomId);
-    socket.emit("ticket", ticket);
+
+    socket.emit("room-joined", {
+      roomId,
+      role: "host",
+      ticket
+    });
+
     io.to(roomId).emit("players", rooms[roomId].players);
   });
 
+  // VÀO PHÒNG → PLAYER
+  socket.on("join-room", ({ roomId, name }) => {
+    const room = rooms[roomId];
+    if (!room) return;
+
+    const ticket = generateTicket();
+
+    room.players[socket.id] = {
+      name,
+      role: "player",
+      ticket
+    };
+
+    socket.join(roomId);
+
+    socket.emit("room-joined", {
+      roomId,
+      role: "player",
+      ticket
+    });
+
+    io.to(roomId).emit("players", room.players);
+  });
+
+  // HOST GỌI SỐ
   socket.on("call-number", roomId => {
     const room = rooms[roomId];
     if (!room) return;
+
+    // CHỈ HOST MỚI ĐƯỢC GỌI
+    if (socket.id !== room.hostId) return;
 
     let num;
     do {
@@ -54,21 +89,53 @@ io.on("connection", socket => {
     } while (room.called.includes(num));
 
     room.called.push(num);
+
     io.to(roomId).emit("number-called", {
       number: num,
       history: room.called
     });
   });
 
+  // BÁO THẮNG
   socket.on("claim-win", roomId => {
-    io.to(roomId).emit("winner", rooms[roomId].players[socket.id].name);
+    const room = rooms[roomId];
+    if (!room) return;
+
+    const player = room.players[socket.id];
+    if (!player) return;
+
+    io.to(roomId).emit("winner", player.name);
   });
+
+  // NGƯỜI THOÁT PHÒNG
+  socket.on("disconnect", () => {
+    for (const roomId in rooms) {
+      const room = rooms[roomId];
+
+      if (room.players[socket.id]) {
+        const wasHost = room.hostId === socket.id;
+        delete room.players[socket.id];
+
+        // nếu HOST thoát → nhường ghế
+        if (wasHost) {
+          const nextHostId = Object.keys(room.players)[0];
+          if (nextHostId) {
+            room.hostId = nextHostId;
+            room.players[nextHostId].role = "host";
+          } else {
+            delete rooms[roomId];
+            return;
+          }
+        }
+
+        io.to(roomId).emit("players", room.players);
+      }
+    }
+  });
+
 });
 
 const PORT = process.env.PORT || 3000;
-
 server.listen(PORT, () => {
   console.log("🚀 Public Lô Tô chạy tại port", PORT);
-});
-
 });
