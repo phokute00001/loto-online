@@ -1,24 +1,90 @@
-body {
-  font-family: Arial;
-  background: #0f172a;
-  color: white;
-  text-align: center;
+* {
+  box-sizing: border-box;
 }
 
-.card {
+body {
+  margin: 0;
+  background: #0f172a;
+  color: #fff;
+  font-family: Arial, sans-serif;
+}
+
+.game {
+  padding: 10px;
+  max-width: 500px;
+  margin: auto;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+#calledBox {
+  background: #020617;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+#calledNumbers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.called {
+  background: #22c55e;
+  padding: 4px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.tickets {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ticket {
+  flex: 1;
+  background: #020617;
+  padding: 8px;
+  border-radius: 8px;
+}
+
+.grid {
   display: grid;
-  grid-template-columns: repeat(5, 60px);
-  gap: 6px;
-  justify-content: center;
-  margin: 10px auto;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
 }
 
 .cell {
   background: #1e293b;
-  padding: 12px;
-  border-radius: 8px;
+  padding: 10px 0;
+  text-align: center;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
 }
 
-.hit {
-  background: #22c55e;
+.cell.called {
+  background: #334155;
+}
+
+.cell.marked {
+  background: #f97316;
+  color: #000;
+}
+
+#btnKinh {
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px;
+  font-size: 18px;
+  font-weight: bold;
+  background: red;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
 }
