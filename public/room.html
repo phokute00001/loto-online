@@ -1,36 +1,35 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8" />
-  <title>Lô Tô Online</title>
+  <meta charset="UTF-8">
+  <title>LÔ TÔ MIỀN NAM</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="style.css">
   <script src="/socket.io/socket.io.js"></script>
-  <script defer src="app.js"></script>
+  <script defer src="room.js"></script>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="game">
-  <h1>🎪 LÔ TÔ ONLINE</h1>
+<header>
+  🎪 <b>LÔ TÔ MIỀN NAM</b>
+</header>
 
-  <div id="calledBox">
-    <h3>Số đã kêu</h3>
-    <div id="calledNumbers"></div>
+<div class="container">
+
+  <div class="left">
+    <h3>🎤 Số đã kêu</h3>
+    <div id="calledNumbers" class="called"></div>
+
+    <button id="callBtn" class="call-btn">🔊 KÊU SỐ</button>
   </div>
 
-  <div class="tickets">
-    <div class="ticket">
-      <h3>Vé 1</h3>
-      <div class="grid" id="ticket1"></div>
-    </div>
+  <div class="right">
+    <h3>🎟 Vé của bạn</h3>
+    <div id="tickets"></div>
 
-    <div class="ticket">
-      <h3>Vé 2</h3>
-      <div class="grid" id="ticket2"></div>
-    </div>
+    <button id="claimLine">🏁 Kinh 1 hàng</button>
+    <button id="claimFull">🎉 Kinh Full vé</button>
   </div>
-
-  <button id="btnKinh">🚨 KINH</button>
 
 </div>
 
