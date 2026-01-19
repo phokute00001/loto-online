@@ -1,28 +1,43 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>LÔ TÔ MIỀN NAM</title>
-<link rel="stylesheet" href="style.css">
-<script src="/socket.io/socket.io.js"></script>
-<script defer src="room.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LÔ TÔ MIỀN NAM</title>
+
+  <link rel="stylesheet" href="style.css">
+  <script src="/socket.io/socket.io.js"></script>
+  <script defer src="room.js"></script>
 </head>
 <body>
 
-<h2 style="color:white;text-align:center">🎪 LÔ TÔ MIỀN NAM</h2>
+<h2 class="title">🎪 LÔ TÔ MIỀN NAM</h2>
 
-<button id="callBtn">🔊 KÊU SỐ</button>
-
-<div class="ticket">
-  <table>
-    <tbody id="ticket"></tbody>
-  </table>
+<!-- KHU CÁI -->
+<div id="hostControls" class="host-controls hidden">
+  <button id="callBtn">🎤 KÊU SỐ</button>
+  <button id="confirmBtn">✅ ĐỐI CHIẾU KINH</button>
+  <button id="startBtn">▶ VÁN MỚI</button>
 </div>
 
-<button id="claimBtn">🎉 KINH 1 HÀNG</button>
+<!-- KHU SỐ ĐÃ KÊU -->
+<div class="called-box">
+  <h3>📢 SỐ ĐÃ KÊU</h3>
+  <div id="calledNumbers"></div>
+</div>
 
-<div id="called"></div>
+<!-- VÉ -->
+<div class="ticket-area">
+  <h3>🎟️ VÉ CỦA BẠN</h3>
+  <div id="tickets"></div>
+</div>
+
+<!-- CHATBOX -->
+<div class="chatbox">
+  <div id="messages"></div>
+  <input id="chatInput" placeholder="Nhập chat hoặc ĐỢI..." />
+  <button id="sendChat">GỬI</button>
+</div>
 
 </body>
 </html>
