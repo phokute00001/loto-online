@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <title>LÔ TÔ MIỀN NAM</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-
 <link rel="stylesheet" href="style.css">
 <script src="/socket.io/socket.io.js"></script>
 <script defer src="room.js"></script>
@@ -14,25 +13,24 @@
 
 <h2>🎪 LÔ TÔ MIỀN NAM</h2>
 
-<div id="roomInfo"></div>
-<div id="role"></div>
-
 <div id="hostControls" style="display:none">
-  <button id="startBtn">▶ BẮT ĐẦU VÁN</button>
+  <button id="startBtn">▶ VÁN MỚI</button>
   <button id="callBtn">🎙 KÊU SỐ</button>
 </div>
 
-<h3>👥 Người trong phòng</h3>
-<ul id="players"></ul>
+<button id="buyBtn">🎟 MUA VÉ</button>
 
 <h3>📣 Số đã kêu</h3>
 <div id="called"></div>
+
+<h3>🎫 Vé của bạn</h3>
+<div id="tickets"></div>
 
 <hr>
 
 <div id="chatBox"></div>
 
-<input id="chatInput" placeholder="Nhập chat hoặc ĐỢI...">
+<input id="chatInput" placeholder="Chat hoặc gõ ĐỢI">
 <button id="sendBtn">GỬI</button>
 
 </body>

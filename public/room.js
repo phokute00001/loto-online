@@ -1,54 +1,54 @@
 const socket = io();
 
-const params = new URLSearchParams(window.location.search);
+const params = new URLSearchParams(location.search);
 const room = params.get("room");
 const name = params.get("name");
 
-const playersEl = document.getElementById("players");
+const ticketsDiv = document.getElementById("tickets");
+const calledDiv = document.getElementById("called");
 const chatBox = document.getElementById("chatBox");
 const input = document.getElementById("chatInput");
-const calledEl = document.getElementById("called");
 const hostControls = document.getElementById("hostControls");
-const roleEl = document.getElementById("role");
-
-document.getElementById("roomInfo").innerText = `Phòng: ${room}`;
 
 socket.emit("join-room", { room, name });
 
-socket.on("room-update", data => {
-  playersEl.innerHTML = "";
-  data.players.forEach(p => {
-    const li = document.createElement("li");
-    li.textContent = p.name;
-    playersEl.appendChild(li);
-  });
-
-  if (socket.id === data.hostId) {
-    roleEl.innerText = "🎤 Bạn là CÁI";
+socket.on("room-update", r => {
+  if (socket.id === r.hostId) {
     hostControls.style.display = "block";
-  } else {
-    roleEl.innerText = "🎟 Người chơi";
-    hostControls.style.display = "none";
   }
+});
+
+document.getElementById("buyBtn").onclick = () => {
+  socket.emit("buy-ticket", room);
+};
+
+socket.on("your-ticket", ticket => {
+  const table = document.createElement("table");
+  table.className = "ticket";
+
+  for (let i = 0; i < 5; i++) {
+    const tr = document.createElement("tr");
+    for (let j = 0; j < 5; j++) {
+      const td = document.createElement("td");
+      td.textContent = ticket[i * 5 + j];
+      tr.appendChild(td);
+    }
+    table.appendChild(tr);
+  }
+  ticketsDiv.appendChild(table);
 });
 
 document.getElementById("startBtn").onclick = () => {
   socket.emit("start-game", room);
+  calledDiv.innerHTML = "";
 };
 
 document.getElementById("callBtn").onclick = () => {
   socket.emit("call-number", room);
 };
 
-socket.on("game-started", () => {
-  calledEl.innerHTML = "";
-  alert("🎲 Ván mới bắt đầu!");
-});
-
-socket.on("number-called", num => {
-  const span = document.createElement("span");
-  span.textContent = num + " ";
-  calledEl.appendChild(span);
+socket.on("number-called", n => {
+  calledDiv.innerHTML += n + " ";
 });
 
 document.getElementById("sendBtn").onclick = sendChat;
@@ -57,17 +57,14 @@ input.addEventListener("keydown", e => {
 });
 
 function sendChat() {
-  const text = input.value.trim();
-  if (!text) return;
-  socket.emit("send-chat", { room, name, text });
+  if (!input.value.trim()) return;
+  socket.emit("send-chat", { room, name, text: input.value });
   input.value = "";
 }
 
 socket.on("chat", msg => {
-  const div = document.createElement("div");
-  div.textContent = msg;
-  chatBox.appendChild(div);
+  const d = document.createElement("div");
+  d.textContent = msg;
+  chatBox.appendChild(d);
   chatBox.scrollTop = chatBox.scrollHeight;
 });
-
-socket.on("error-msg", msg => alert(msg));
