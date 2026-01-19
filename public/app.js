@@ -1,75 +1,66 @@
 const socket = io();
 
-const calledNumbers = [];
-const tickets = {
-  ticket1: [],
-  ticket2: []
+const nameInput = document.getElementById("name");
+const roomInput = document.getElementById("room");
+const coinInput = document.getElementById("coin");
+const ticketSelect = document.getElementById("tickets");
+
+const btnCreate = document.getElementById("btnCreate");
+const btnJoin = document.getElementById("btnJoin");
+
+// ====== TẠO PHÒNG – CÁI ======
+btnCreate.onclick = () => {
+  const name = nameInput.value.trim();
+  const roomId = roomInput.value.trim();
+
+  if (!name || !roomId) {
+    alert("Vui lòng nhập tên và mã phòng");
+    return;
+  }
+
+  socket.emit("create-room", {
+    roomId,
+    name
+  });
+
+  socket.on("room-created", () => {
+    localStorage.setItem("name", name);
+    localStorage.setItem("room", roomId);
+    localStorage.setItem("role", "host");
+    window.location.href = "room.html";
+  });
 };
 
-// Demo vé (bước sau sẽ lấy từ server)
-function randomTicket() {
-  const nums = [];
-  while (nums.length < 25) {
-    const n = Math.floor(Math.random() * 90) + 1;
-    if (!nums.includes(n)) nums.push(n);
+// ====== VÀO PHÒNG – NGƯỜI CHƠI ======
+btnJoin.onclick = () => {
+  const name = nameInput.value.trim();
+  const roomId = roomInput.value.trim();
+  const coin = Number(coinInput.value);
+  const tickets = Number(ticketSelect.value);
+
+  if (!name || !roomId) {
+    alert("Vui lòng nhập tên và mã phòng");
+    return;
   }
-  return nums;
-}
 
-function renderTicket(id, nums) {
-  const el = document.getElementById(id);
-  el.innerHTML = "";
-  nums.forEach(n => {
-    const cell = document.createElement("div");
-    cell.className = "cell";
-    cell.innerText = n;
+  if (coin < tickets * 5) {
+    alert("Không đủ coin để mua vé");
+    return;
+  }
 
-    cell.onclick = () => {
-      if (!calledNumbers.includes(n)) return;
-      cell.classList.toggle("marked");
-    };
+  localStorage.setItem("name", name);
+  localStorage.setItem("room", roomId);
+  localStorage.setItem("coin", coin);
+  localStorage.setItem("tickets", tickets);
+  localStorage.setItem("role", "player");
 
-    el.appendChild(cell);
+  socket.emit("join-room", {
+    roomId,
+    name,
+    tickets
   });
-}
 
-function renderCalled() {
-  const box = document.getElementById("calledNumbers");
-  box.innerHTML = "";
-  calledNumbers.forEach(n => {
-    const span = document.createElement("div");
-    span.className = "called";
-    span.innerText = n;
-    box.appendChild(span);
+  socket.on("your-tickets", () => {
+    window.location.href = "room.html";
   });
-}
-
-// Khởi tạo vé
-tickets.ticket1 = randomTicket();
-tickets.ticket2 = randomTicket();
-
-renderTicket("ticket1", tickets.ticket1);
-renderTicket("ticket2", tickets.ticket2);
-
-// Demo kêu số (giả lập host)
-setInterval(() => {
-  if (calledNumbers.length >= 90) return;
-  let n;
-  do {
-    n = Math.floor(Math.random() * 90) + 1;
-  } while (calledNumbers.includes(n));
-
-  calledNumbers.push(n);
-  renderCalled();
-
-  document.querySelectorAll(".cell").forEach(c => {
-    if (parseInt(c.innerText) === n) {
-      c.classList.add("called");
-    }
-  });
-}, 3000);
-
-// Nút KINH (bước sau mới xử lý)
-document.getElementById("btnKinh").onclick = () => {
-  alert("Đã hô KINH! (Bước sau server sẽ kiểm tra)");
 };

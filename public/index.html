@@ -2,29 +2,87 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>Lô Tô Kinh</title>
+  <title>LÔ TÔ MIỀN NAM</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <script defer src="app.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="style.css">
-  <script defer src="index.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .box {
+      background: #222;
+      padding: 20px;
+      border-radius: 10px;
+      width: 320px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.6);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin: 6px 0;
+      border-radius: 5px;
+      border: none;
+      font-size: 14px;
+    }
+
+    input, select {
+      background: #fff;
+    }
+
+    button {
+      background: #ff9800;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #ffa726;
+    }
+
+    .small {
+      font-size: 12px;
+      opacity: 0.8;
+      text-align: center;
+      margin-top: 6px;
+    }
+  </style>
 </head>
 <body>
 
 <div class="box">
-  <h2>LÔ TÔ KINH</h2>
+  <h2>🎪 LÔ TÔ MIỀN NAM</h2>
 
   <input id="name" placeholder="Tên người chơi">
   <input id="room" placeholder="Mã phòng">
-  <input id="coin" type="number" placeholder="Số coin" value="1000">
+
+  <input id="coin" type="number" min="0" placeholder="Coin mang theo">
 
   <select id="tickets">
-    <option value="1">1 vé</option>
-    <option value="2">2 vé</option>
+    <option value="1">Mua 1 vé (5 coin)</option>
+    <option value="2">Mua 2 vé (10 coin)</option>
   </select>
 
-  <button onclick="createRoom()">🎙 Tạo phòng</button>
-  <button onclick="joinRoom()">🎟 Vào phòng</button>
+  <button id="btnCreate">🎤 Tạo phòng (CÁI)</button>
+  <button id="btnJoin">🎟 Vào phòng</button>
 
-  <p id="status"></p>
+  <div class="small">Không cần đăng ký – chơi như hội lô tô ngoài đời</div>
 </div>
 
 </body>
